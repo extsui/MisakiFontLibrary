@@ -1,0 +1,7 @@
+# Following Directory are managed by MisakiFontLibrary
+image/*
+!image/.gitkeep
+font/*
+!font/.gitkeep
+
+*.pyc
