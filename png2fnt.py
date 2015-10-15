@@ -1,16 +1,25 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 import sys
+import exceptions
 from PIL import Image
+import PIL.ImageColor as IC
 
-CH_HEIGHT = 8
-CH_WIDTH  = 8
+""" RGBA-PNGとL-PNGでデータ形式が異なることへの対処 """
+def getcolor(image, color):
+    if image.getbands() == ('R', 'G', 'B', 'A'):
+        return IC.getcolor(color, 'RGBA')
+    elif image.getbands() == ('1',):
+        return IC.getcolor(color, 'L')
+    else:
+        raise exceptions.NotImplementedError('Only RGBA or L format!')
 
-def print_char_image(image, ch_x, ch_y):
-    for y in range(CH_HEIGHT):
-        for x in range(CH_WIDTH):
-            xy = (x + ch_x * CH_WIDTH, y + ch_y * CH_HEIGHT)
-            if image.getpixel(xy) == (255, 255, 255, 255):
+def print_char_image(image, ch_width, ch_height, ch_x, ch_y):
+    white_color = getcolor(image, 'white')
+    for y in range(ch_height):
+        for x in range(ch_width):
+            xy = (x + ch_x * ch_width, y + ch_y * ch_height)
+            if image.getpixel(xy) == white_color:
                 sys.stdout.write('  ')
             else:
                 sys.stdout.write('XX')
@@ -48,21 +57,35 @@ def print_char_image(image, ch_x, ch_y):
      0x30, # 00110000
      0x00] # 0x000000
 """
-def char_to_array(image, ch_x, ch_y):
+def char_to_array(image, ch_width, ch_height, ch_x, ch_y):
+    black_color = getcolor(image, 'black')
     array = []
-    for x in range(CH_WIDTH):
+    for x in range(ch_width):
         ptn = 0x00
-        for y in range(CH_HEIGHT):
-            xy = (x + ch_x * CH_WIDTH, y + ch_y * CH_HEIGHT)
-            if image.getpixel(xy) == (0, 0, 0, 255):
+        for y in range(ch_height):
+            xy = (x + ch_x * ch_width, y + ch_y * ch_height)
+            if image.getpixel(xy) == black_color:
                 ptn |= 1<<y
         array.append(ptn)
     return array
 
 if __name__ == '__main__':
     image = Image.open('./image/misaki_gothic.png')
+    # DEBUG: 'Ａ'を表示
+    print_char_image(image, 8, 8, 0, 6)
+    """ 8x8の変換処理 """
     with open('./font/misaki_gothic.fnt', 'wb') as font:
         for y in range(94):
             for x in range(94):
-                array = bytearray(char_to_array(image, x, y))
+                array = bytearray(char_to_array(image, 8, 8, x, y))
+                font.write(array)
+
+    image = Image.open('./image/misaki_4x8_jisx0201.png')
+    # DEBUG: 'A'を表示
+    print_char_image(image, 4, 8, 1, 4)
+    """ 4x8の変換処理 """
+    with open('./font/misaki_4x8_jisx0201.fnt', 'wb') as font:
+        for y in range(16):
+            for x in range(16):
+                array = bytearray(char_to_array(image, 4, 8, x, y))
                 font.write(array)
