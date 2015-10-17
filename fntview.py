@@ -2,51 +2,70 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import curses
+import FontImage
 
-CH_NUM_IN_LINE = 16#94
-CH_BYTE_SIZE = 4#8
-
-CH_HEIGHT = 8
-CH_WIDTH  = 4#8
-
-def char_to_index(font, ch_x, ch_y):
-    return (ch_y * CH_NUM_IN_LINE + ch_x) * CH_BYTE_SIZE
-
-def draw_char(stdscr, font, base_x, base_y, ch_x, ch_y):
-    for x in range(CH_WIDTH):
-        index = x + char_to_index(font, ch_x, ch_y)
-        for y in range(CH_HEIGHT):
-            if font[index] & (1<<y):
-                str = 'XX'
+def draw_char(win, base_x, base_y, limit_x, limit_y,
+              ch_data, ch_width, ch_height):
+    for x in range(ch_width):
+        draw_x = base_x + x*2
+        if not (0 <= draw_x and draw_x < limit_x - 1):
+            continue
+        for y in range(ch_height):
+            draw_y = base_y + y
+            if not (0 <= draw_y and draw_y < limit_y - 1):
+                continue
+            if ch_data[x] & (1<<y):
+                win.addstr(draw_y, draw_x, '  ', curses.A_REVERSE)
             else:
-                str = '  '
-            stdscr.addstr(base_y + y, base_x + x*2, str)
-            """
-            # curses.A_REVERSEで反転表示可能．
-            # 'XX'とどっちが見やすいかについては今後検討．
-            if font[index] & (1<<y):
-                stdscr.addstr(base_y + y, base_x + x*2, '  ', curses.A_REVERSE)
-            else:
-                stdscr.addstr(base_y + y, base_x + x*2, '  ')
-            """
+                win.addstr(draw_y, draw_x, '  ')
+
+def draw_string(win, font, base_x, base_y, sjis_str):
+    ch_array = np.fromstring(sjis_str, dtype=np.uint8)
+    # 8x8
+    for i in range(0, len(ch_array), 2):
+        hi = ch_array[i]
+        lo = ch_array[i+1]
+        ch_x, ch_y = sjis_to_font(hi, lo)
+        ch_data = font.get(ch_x, ch_y)
+        draw_char(win, base_x + i*8, base_y + 0, WIN_WIDHT, WIN_HEIGHT,
+                  ch_data, font.ch_width, font.ch_height)
+    """
+    # 4x8
+    for i in range(0, len(ch_array), 1):
+        ch_x, ch_y = ch_array[i] % 16, ch_array[i] / 16
+        ch_data = font.get(ch_x, ch_y)
+        draw_char(win, base_x + i*8, base_y + 0, WIN_WIDHT, WIN_HEIGHT,
+                  ch_data, font.ch_width, font.ch_height)
+    """
+
+WIN_WIDHT = 256
+WIN_HEIGHT = 32
 
 def curses_main(stdscr):
-    #font = np.fromfile('./font/misaki_gothic.fnt', dtype=np.uint8)
-    font = np.fromfile('./font/misaki_4x8_jisx0201.fnt', dtype=np.uint8)
+    font4x8 = FontImage.FontImage('./font/misaki_4x8_jisx0201.fnt',
+                                  4, 8, 16, 4)
+    font8x8 = FontImage.FontImage('./font/misaki_gothic.fnt',
+                                  8, 8, 94, 8)
 
-    #ch_array = np.fromstring(u'　滌漾熙'.encode('shift-jis'), dtype=np.uint8)
-    ch_array = np.fromstring('Hello World!', dtype=np.uint8)
-    #for i in range(0, len(ch_array), 2):
-    for i in range(0, len(ch_array)):
-    #    hi = ch_array[i]
-    #    lo = ch_array[i+1]
-    #    ch_x, ch_y = sjis_to_font(hi, lo)
-        ch_x = ch_array[i] % 16
-        ch_y = ch_array[i] / 16
-        draw_char(stdscr, font, i*7, 0, ch_x, ch_y)
+    win = curses.newwin(WIN_HEIGHT, WIN_WIDHT)
+    win.noutrefresh()
 
-    stdscr.getch()
-    stdscr.refresh()
+    sjis_str = u'遥か３８万キロのボヤージュ'.encode('shift-jis')
+    #sjis_str = u'abcdefghijklmnopqrstuvwxyz0123456789'.encode('shift-jis')
+
+    while True:
+        begin_offset = WIN_WIDHT
+        end_offset = - len(sjis_str) * 8
+
+        for x in range(begin_offset, end_offset, -2):
+            draw_string(win, font8x8, x, 0, sjis_str)
+            #draw_string(win, font4x8, x, 0, sjis_str)
+
+            win.refresh()
+            curses.doupdate()
+
+            import time
+            time.sleep(0.050)
 
 def sjis_to_font(hi, lo):
     """
