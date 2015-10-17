@@ -3,11 +3,11 @@
 import numpy as np
 import curses
 
-CH_NUM_IN_LINE = 94
-CH_BYTE_SIZE = 8
+CH_NUM_IN_LINE = 16#94
+CH_BYTE_SIZE = 4#8
 
 CH_HEIGHT = 8
-CH_WIDTH  = 8
+CH_WIDTH  = 4#8
 
 def char_to_index(font, ch_x, ch_y):
     return (ch_y * CH_NUM_IN_LINE + ch_x) * CH_BYTE_SIZE
@@ -31,18 +31,19 @@ def draw_char(stdscr, font, base_x, base_y, ch_x, ch_y):
             """
 
 def curses_main(stdscr):
-    font = np.fromfile('./font/misaki_gothic.fnt', dtype=np.uint8)
+    #font = np.fromfile('./font/misaki_gothic.fnt', dtype=np.uint8)
+    font = np.fromfile('./font/misaki_4x8_jisx0201.fnt', dtype=np.uint8)
 
-    # '　' 0x8140 上群左上
-    # '滌' 0x9ffc 上群右下
-    # '漾' 0xe040 下群左上
-    # '熙' 0xeaa4 下群表示可能最終文字
-    ch_array = np.fromstring(u'　滌漾熙'.encode('shift-jis'), dtype=np.uint8)
-    for i in range(0, len(ch_array), 2):
-        hi = ch_array[i]
-        lo = ch_array[i+1]
-        ch_x, ch_y = sjis_to_font(hi, lo)
-        draw_char(stdscr, font, i*8, 0, ch_x, ch_y)
+    #ch_array = np.fromstring(u'　滌漾熙'.encode('shift-jis'), dtype=np.uint8)
+    ch_array = np.fromstring('Hello World!', dtype=np.uint8)
+    #for i in range(0, len(ch_array), 2):
+    for i in range(0, len(ch_array)):
+    #    hi = ch_array[i]
+    #    lo = ch_array[i+1]
+    #    ch_x, ch_y = sjis_to_font(hi, lo)
+        ch_x = ch_array[i] % 16
+        ch_y = ch_array[i] / 16
+        draw_char(stdscr, font, i*7, 0, ch_x, ch_y)
 
     stdscr.getch()
     stdscr.refresh()
