@@ -8,7 +8,7 @@ class FontManager:
         self.font4x8 = FontImage.FontImage(font4x8_file, 4, 8, 16, 4)
         self.font8x8 = FontImage.FontImage(font8x8_file, 8, 8, 94, 8)
 
-    def str_to_bitmap(self, sjis_str):
+    def str_to_bitmap(self, sjis_str, raw=False):
         bitmap = []
         ch_array = np.fromstring(sjis_str, dtype=np.uint8)
         i = 0
@@ -21,7 +21,10 @@ class FontManager:
                 ch_x, ch_y = self.sjis_ascii_to_ch_xy(ch_array[i])
                 ch_data = self.font4x8.get(ch_x, ch_y)
                 i += 1
-            bitmap.extend(ch_data)
+            if raw is True:
+                bitmap.extend(ch_data)
+            else:
+                bitmap.append(ch_data)
         return bitmap
 
     def sjis_is_multi(self, c):

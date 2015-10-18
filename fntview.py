@@ -28,7 +28,7 @@ def curses_main(stdscr):
 
     fm = FontManager.FontManager(font4x8_file='./font/misaki_4x8_jisx0201.fnt',
                                  font8x8_file='./font/misaki_gothic.fnt')
-    bitmap = fm.str_to_bitmap(sjis_str)
+    bitmap = fm.str_to_bitmap(sjis_str, raw=True)
 
     while True:
         begin_offset = WIN_WIDHT
