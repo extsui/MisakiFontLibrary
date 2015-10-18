@@ -4,11 +4,9 @@ import numpy as np
 import FontImage
 
 class FontManager:
-    def __init__(self):
-        self.font4x8 = FontImage.FontImage('./font/misaki_4x8_jisx0201.fnt',
-                                           4, 8, 16, 4)
-        self.font8x8 = FontImage.FontImage('./font/misaki_gothic.fnt',
-                                           8, 8, 94, 8)
+    def __init__(self, font4x8_file, font8x8_file):
+        self.font4x8 = FontImage.FontImage(font4x8_file, 4, 8, 16, 4)
+        self.font8x8 = FontImage.FontImage(font8x8_file, 8, 8, 94, 8)
 
     def str_to_bitmap(self, sjis_str):
         bitmap = []
